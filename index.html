@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Grid Pattern</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #00d9ff;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #d0d0d0;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(0, 217, 255, 0.15);
+            border-color: rgba(0, 217, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #00d9ff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .difficulty-status {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #00d9ff;
+            margin-bottom: 20px;
+            height: 20px;
+            min-height: 20px;
+            font-style: italic;
+        }
+
+        .game-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .grid.size-3x3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid.size-4x4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .grid.size-5x5 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            min-width: 70px;
+            max-width: 100px;
+            background: linear-gradient(135deg, #2a2a4e 0%, #1f1f3a 100%);
+            border: 2px solid rgba(0, 217, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: rgba(0, 217, 255, 0.3);
+            font-weight: bold;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-cell:hover:not(.disabled) {
+            background: linear-gradient(135deg, #3a3a5e 0%, #2f2f4a 100%);
+            border-color: rgba(0, 217, 255, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+        }
+
+        .grid-cell.active {
+            background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+            border-color: #00d9ff;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.3);
+            color: #001a33;
+            transform: scale(0.95);
+        }
+
+        .grid-cell.correct {
+            animation: correctFeedback 0.6s ease;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+            color: #001a1a;
+        }
+
+        .grid-cell.incorrect {
+            animation: incorrectFeedback 0.6s ease;
+            background: linear-gradient(135deg, #ff3366 0%, #cc0033 100%);
+            border-color: #ff3366;
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.8);
+            color: #ffffff;
+        }
+
+        .grid-cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .grid-cell.revealed {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        @keyframes correctFeedback {
+            0% {
+                transform: scale(0.95);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes incorrectFeedback {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff 0%, #0099cc 100%);
+            color: #001a33;
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 217, 255, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(100, 100, 150, 0.3);
+            color: #00d9ff;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 100, 150, 0.5);
+            border-color: rgba(0, 217, 255, 0.5);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.2);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled,
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .round-message {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 30px;
+            color: #00ff88;
+        }
+
+        .round-message.error {
+            color: #ff3366;
+        }
+
+        .round-message.info {
+            color: #00d9ff;
+        }
+
+        .pattern-display {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+
+        .best-records {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(0, 217, 255, 0.2);
+        }
+
+        .record-card {
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .record-label {
+            font-size: 0.85rem;
+            color: #00d9ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .record-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            color: #00d9ff;
+            margin-bottom: 20px;
+        }
+
+        .modal-message {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .grid-cell {
+                min-width: 60px;
+                max-width: 80px;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-content {
+                padding: 30px;
+                max-width: 90%;
+            }
+
+            .best-records {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .grid-cell {
+                min-width: 50px;
+                max-width: 70px;
+            }
+
+            .game-section {
+                padding: 20px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .instructions {
+                font-size: 0.85rem;
+                padding: 15px;
+            }
+        }
+
+        .pulse-animation {
+            animation: pulse 0.6s ease;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Accessibility */
+        button:focus,
+        .grid-cell:focus {
+            outline: 2px solid #00d9ff;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Memory Grid Pattern</h1>
+            <p class="subtitle">Test your memory and pattern recognition skills</p>
+        </div>
+
+        <div class="instructions">
+            <strong>How to Play:</strong> Watch the pattern of highlighted squares, then click them in the same order. 
+            Each successful round adds more squares to remember. The game adapts to your skill level!
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-label">Level</div>
+                <div class="stat-value" id="levelDisplay">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="scoreDisplay">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Accuracy</div>
+                <div class="stat-value" id="accuracyDisplay">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Streak</div>
+                <div class="stat-value" id="streakDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="difficulty-status" id="difficultyStatus"></div>
+
+        <div class="game-section">
+            <div class="button-group">
+                <button class="btn-primary" id="startBtn" aria-label="Start Game">Start Game</button>
+                <button class="btn-secondary" id="resetBtn" aria-label="Reset Progress">Reset Progress</button>
+            </div>
+
+            <div class="pattern-display" id="patternDisplay"></div>
+            <div class="round-message" id="roundMessage"></div>
+
+            <div class="grid-container">
+                <div class="grid size-3x3" id="gameGrid"></div>
+            </div>
+
+            <div class="best-records">
+                <div class="record-card">
+                    <div class="record-label">Best Score</div>
+                    <div class="record-value" id="bestScore">0</div>
+                </div>
+                <div class="record-card">
+                    <div class="record-label">Highest Level</div>
+                    <div class="record-value" id="bestLevel">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">Round Complete!</div>
+            <div class="modal-message" id="modalMessage"></div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="nextRoundBtn" aria-label="Next Round">Next Round</button>
+                <button class="btn-secondary" id="retryBtn" aria-label="Retry Level" style="display: none;">Retry Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // MEMORY GRID PATTERN GAME - Complete Implementation
+        // ============================================================================
+
+        // ============================================================================
+        // GAME STATE & CONFIGURATION
+        // ============================================================================
+        const gameState = {
+            currentLevel: 1,
+            score: 0,
+            currentPattern: [],
+            playerPattern: [],
+            isPlayingPattern: false,
+            isPlayerTurn: false,
+            accuracy: 0,
+            totalAttempts: 0,
+            correctAttempts: 0,
+            streak: 0,
+            responseTime: [],
+            gameActive: false,
+            lastRoundWon: false,
+            gridSize: 3,
+            flashDuration: 600,
+            delayBetweenFlashes: 200,
+            playerDelay: 0,
+            difficultyChangeMessage: '',
+            difficultyModifier: 1.0
+        };
+
+        // Adaptive AI Configuration
+        const aiConfig = {
+            baseFlashDuration: 600,
+            baseFlashDelay: 200,
+            minFlashDuration: 300,
+            maxFlashDuration: 1000,
+            minFlashDelay: 100,
+            maxFlashDelay: 400,
+            performanceWindow: 3, // Consider last N rounds for difficulty
+            accuracyThresholdHigh: 90,
+            accuracyThresholdLow: 70,
+            minGridSize: 3,
+            maxGridSize: 5
+        };
+
+        // DOM Elements
+        const gameGrid = document.getElementById('gameGrid');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const levelDisplay = document.getElementById('levelDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const streakDisplay = document.getElementById('streakDisplay');
+        const roundMessage = document.getElementById('roundMessage');
+        const patternDisplay = document.getElementById('patternDisplay');
+        const difficultyStatus = document.getElementById('difficultyStatus');
+        const resultModal = document.getElementById('resultModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const nextRoundBtn = document.getElementById('nextRoundBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const bestScoreDisplay = document.getElementById('bestScore');
+        const bestLevelDisplay = document.getElementById('bestLevel');
+
+        // Store last few round results for AI analysis
+        const recentPerformance = [];
+
+        // ============================================================================
+        // PATTERN GENERATION
+        // ============================================================================
+        /**
+         * Generates a random pattern by selecting unique squares from the grid.
+         * Ensures no duplicate selections within a single pattern.
+         * @param {number} length - Number of squares in the pattern
+         * @param {number} gridSize - Size of the grid (3, 4, or 5)
+         * @returns {array} Array of random cell indices
+         */
+        function generatePattern(length, gridSize) {
+            const maxCells = gridSize * gridSize;
+            const pattern = [];
+            const used = new Set();
+
+            while (pattern.length < length) {
+                const randomIndex = Math.floor(Math.random() * maxCells);
+                if (!used.has(randomIndex)) {
+                    pattern.push(randomIndex);
+                    used.add(randomIndex);
+                }
+            }
+
+            return pattern;
+        }
+
+        // ============================================================================
+        // GRID INITIALIZATION & RENDERING
+        // ============================================================================
+        /**
+         * Creates and renders the game grid based on current grid size.
+         * Sets up event listeners for each cell.
+         */
+        function createGrid() {
+            gameGrid.innerHTML = '';
+            gameGrid.className = `grid size-${gameState.gridSize}x${gameState.gridSize}`;
+
+            const totalCells = gameState.gridSize * gameState.gridSize;
+
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.setAttribute('data-index', i);
+                cell.setAttribute('aria-label', `Grid cell ${i + 1}`);
+                cell.setAttribute('role', 'button');
+                cell.setAttribute('tabindex', '0');
+
+                cell.addEventListener('click', handleCellClick);
+                cell.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCellClick.call(cell);
+                    }
+                });
+
+                gameGrid.appendChild(cell);
+            }
+        }
+
+        // ============================================================================
+        // PATTERN DISPLAY & ANIMATION
+        // ============================================================================
+        /**
+         * Plays the current pattern by flashing each square in sequence.
+         * Prevents player input during pattern playback.
+         */
+        async function playPattern() {
+            gameState.isPlayingPattern = true;
+            gameState.isPlayerTurn = false;
+            startBtn.disabled = true;
+            patternDisplay.textContent = 'Watch the pattern...';
+            patternDisplay.className = 'pattern-display';
+
+            // Small delay before starting the pattern
+            await delay(500);
+
+            for (let i = 0; i < gameState.currentPattern.length; i++) {
+                const cellIndex = gameState.currentPattern[i];
+                const cell = document.querySelector(`[data-index="${cellIndex}"]`);
+
+                // Flash the cell
+                cell.classList.add('active');
+                cell.classList.add('pulse-animation');
+
+                await delay(gameState.flashDuration);
+
+                cell.classList.remove('active');
+                cell.classList.remove('pulse-animation');
+
+                if (i < gameState.currentPattern.length - 1) {
+                    await delay(gameState.delayBetweenFlashes);
+                }
+            }
+
+            // Pattern playback complete
+            await delay(500);
+            gameState.isPlayingPattern = false;
+            gameState.isPlayerTurn = true;
+            startBtn.disabled = false;
+
+            patternDisplay.textContent = 'Your turn! Click the squares in order.';
+            roundMessage.textContent = '';
+            roundMessage.className = 'round-message info';
+        }
+
+        // ============================================================================
+        // PLAYER INPUT HANDLING
+        // ============================================================================
+        /**
+         * Handles player clicking on grid cells.
+         * Records the click, provides feedback, and checks against the pattern.
+         */
+        function handleCellClick(event) {
+            // Prevent clicks during pattern playback, when game is inactive, or after round is done
+            if (gameState.isPlayingPattern || !gameState.isPlayerTurn || !gameState.gameActive) {
+                return;
+            }
+
+            // Prevent clicks after the round has been completed (waiting for modal or next action)
+            if (!gameState.isPlayerTurn) {
+                return;
+            }
+
+            const cell = event.target;
+            const cellIndex = parseInt(cell.getAttribute('data-index'));
+            const clickTime = performance.now();
+
+            // Record response time from pattern display end
+            if (gameState.playerPattern.length === 0) {
+                gameState.responseTime.push(clickTime);
+            }
+
+            gameState.playerPattern.push(cellIndex);
+
+            // Visual feedback for clicked cell
+            cell.classList.add('pulse-animation');
+
+            // Check if the clicked cell is correct
+            const isCorrect = cellIndex === gameState.currentPattern[gameState.playerPattern.length - 1];
+
+            if (isCorrect) {
+                cell.classList.add('correct');
+                roundMessage.textContent = '✓ Correct!';
+                roundMessage.className = 'round-message';
+                gameState.correctAttempts++;
+
+                // Remove feedback class after animation
+                setTimeout(() => cell.classList.remove('correct'), 600);
+            } else {
+                cell.classList.add('incorrect');
+                roundMessage.textContent = '✗ Wrong! Game Over.';
+                roundMessage.className = 'round-message error';
+                gameState.isPlayerTurn = false;
+
+                // Show the correct pattern after a wrong click
+                setTimeout(() => {
+                    showCorrectPattern();
+                    handleRoundEnd(false);
+                }, 1000);
+
+                return;
+            }
+
+            // Check if player has completed the entire pattern
+            if (gameState.playerPattern.length === gameState.currentPattern.length) {
+                gameState.isPlayerTurn = false;
+                await delay(500);
+                handleRoundEnd(true);
+            }
+
+            gameState.totalAttempts++;
+        }
+
+        /**
+         * Displays the correct pattern when the player makes a mistake.
+         * Highlights each square in the correct sequence.
+         */
+        async function showCorrectPattern() {
+            roundMessage.textContent = 'The correct pattern was:';
+            roundMessage.className = 'round-message info';
+
+            await delay(500);
+
+            for (let i = 0; i < gameState.currentPattern.length; i++) {
+                const cellIndex = gameState.currentPattern[i];
+                const cell = document.querySelector(`[data-index="${cellIndex}"]`);
+
+                cell.classList.add('revealed');
+                await delay(400);
+                cell.classList.remove('revealed');
+
+                if (i < gameState.currentPattern.length - 1) {
+                    await delay(200);
+                }
+            }
+        }
+
+        // ============================================================================
+        // ROUND MANAGEMENT
+        // ============================================================================
+        /**
+         * Handles the end of a round. Determines if player succeeded or failed,
+         * updates stats, and initiates next round or retry.
+         * @param {boolean} success - Whether the player completed the pattern correctly
+         */
+        async function handleRoundEnd(success) {
+            gameState.lastRoundWon = success;
+
+            if (success) {
+                // Calculate score for this round
+                const roundScore = calculateRoundScore();
+                gameState.score += roundScore;
+                gameState.streak++;
+
+                roundMessage.textContent = `✓ Perfect! +${roundScore} points`;
+                roundMessage.className = 'round-message';
+
+                recentPerformance.push({
+                    success: true,
+                    accuracy: 100,
+                    level: gameState.currentLevel
+                });
+
+                // Update difficulty based on recent performance
+                adjustDifficulty();
+
+                // Prepare for next round
+                showResultModal(true, roundScore);
+            } else {
+                // Calculate accuracy for failed attempt
+                const accuracy = (gameState.correctAttempts / gameState.currentPattern.length) * 100;
+                recentPerformance.push({
+                    success: false,
+                    accuracy: accuracy,
+                    level: gameState.currentLevel
+                });
+
+                gameState.streak = 0;
+
+                // Update difficulty based on failure
+                adjustDifficulty();
+
+                showResultModal(false, gameState.currentPattern.length);
+            }
+
+            updateStats();
+        }
+
+        // ============================================================================
+        // SCORING SYSTEM
+        // ============================================================================
+        /**
+         * Calculates points earned for a successful round.
+         * Factors in: pattern length, level, streak bonus, and speed bonus.
+         * @returns {number} Points earned in this round
+         */
+        function calculateRoundScore() {
+            const baseScore = gameState.currentPattern.length * 10;
+            const levelBonus = gameState.currentLevel * 5;
+            const streakBonus = gameState.streak * 3;
+
+            // Speed bonus: faster clicks = more points (up to +20 points)
+            let speedBonus = 0;
+            if (gameState.responseTime.length > 0) {
+                const avgResponseTime = gameState.responseTime.reduce((a, b) => a + b, 0) / gameState.responseTime.length;
+                speedBonus = Math.max(0, Math.min(20, 20 - (avgResponseTime / 50)));
+            }
+
+            return Math.round(baseScore + levelBonus + streakBonus + speedBonus);
+        }
+
+        // ============================================================================
+        // DIFFICULTY ADJUSTMENT & AI LOGIC
+        // ============================================================================
+        /**
+         * Adaptive AI Difficulty Manager
+         * Analyzes recent performance and adjusts game difficulty accordingly.
+         * 
+         * Decision factors:
+         * - Recent accuracy percentage (last 3 rounds)
+         * - Streak performance
+         * - Number of mistakes in a row
+         * - Current level
+         * 
+         * Adjustments made to:
+         * - Flash duration (how long squares are highlighted)
+         * - Delay between flashes
+         * - Pattern length
+         * - Grid size
+         */
+        function adjustDifficulty() {
+            if (recentPerformance.length === 0) {
+                return;
+            }
+
+            // Calculate average accuracy from recent rounds (last 3)
+            const performanceWindow = recentPerformance.slice(-aiConfig.performanceWindow);
+            const recentAccuracy = performanceWindow.reduce((sum, perf) => {
+                return sum + (perf.success ? 100 : perf.accuracy);
+            }, 0) / performanceWindow.length;
+
+            // Count consecutive failures
+            let consecutiveFailures = 0;
+            for (let i = recentPerformance.length - 1; i >= 0; i--) {
+                if (!recentPerformance[i].success) {
+                    consecutiveFailures++;
+                } else {
+                    break;
+                }
+            }
+
+            gameState.difficultyChangeMessage = 'Difficulty: Balanced';
+
+            // AI Decision Logic
+            if (consecutiveFailures >= 2) {
+                // Multiple failures: Make it easier
+                gameState.difficultyChangeMessage = 'Difficulty adjusted: Giving you a little more time.';
+                gameState.flashDuration = Math.min(
+                    gameState.flashDuration + 100,
+                    aiConfig.maxFlashDuration
+                );
+                gameState.delayBetweenFlashes = Math.min(
+                    gameState.delayBetweenFlashes + 50,
+                    aiConfig.maxFlashDelay
+                );
+            } else if (recentAccuracy >= aiConfig.accuracyThresholdHigh && gameState.streak >= 2) {
+                // Strong performance: Increase difficulty
+                gameState.difficultyChangeMessage = 'Difficulty adjusted: Getting harder!';
+                gameState.flashDuration = Math.max(
+                    gameState.flashDuration - 50,
+                    aiConfig.minFlashDuration
+                );
+                gameState.delayBetweenFlashes = Math.max(
+                    gameState.delayBetweenFlashes - 25,
+                    aiConfig.minFlashDelay
+                );
+            } else if (recentAccuracy < aiConfig.accuracyThresholdLow) {
+                // Below threshold: Make it slightly easier
+                gameState.difficultyChangeMessage = 'Difficulty adjusted: Giving you more time to prepare.';
+                gameState.flashDuration = Math.min(
+                    gameState.flashDuration + 50,
+                    aiConfig.maxFlashDuration
+                );
+            }
+
+            // Update difficulty status display
+            difficultyStatus.textContent = gameState.difficultyChangeMessage;
+        }
+
+        /**
+         * Handles progression to the next level.
+         * Increases grid size at specific level thresholds.
+         * Increases pattern complexity.
+         */
+        function progressToNextLevel() {
+            gameState.currentLevel++;
+
+            // Update accuracy calculation
+            gameState.accuracy = gameState.totalAttempts > 0
+                ? Math.round((gameState.correctAttempts / gameState.totalAttempts) * 100)
+                : 0;
+
+            // Determine grid size based on level
+            if (gameState.currentLevel <= 3) {
+                gameState.gridSize = 3;
+            } else if (gameState.currentLevel <= 6) {
+                gameState.gridSize = 4;
+            } else {
+                gameState.gridSize = 5;
+            }
+
+            // Increase pattern length based on level
+            const patternLength = Math.min(3 + Math.floor(gameState.currentLevel / 2), 12);
+
+            createGrid();
+            gameState.currentPattern = generatePattern(patternLength, gameState.gridSize);
+            gameState.playerPattern = [];
+            gameState.responseTime = [];
+
+            updateStats();
+        }
+
+        // ============================================================================
+        // STATISTICS & UI UPDATES
+        // ============================================================================
+        /**
+         * Updates all display elements with current game statistics.
+         */
+        function updateStats() {
+            levelDisplay.textContent = gameState.currentLevel;
+            scoreDisplay.textContent = gameState.score;
+            streakDisplay.textContent = gameState.streak;
+
+            // Calculate and display accuracy
+            if (gameState.totalAttempts > 0) {
+                gameState.accuracy = Math.round((gameState.correctAttempts / gameState.totalAttempts) * 100);
+            }
+            accuracyDisplay.textContent = gameState.accuracy + '%';
+
+            // Update best records
+            const bestScore = Math.max(gameState.score, parseInt(bestScoreDisplay.textContent) || 0);
+            const bestLevel = Math.max(gameState.currentLevel, parseInt(bestLevelDisplay.textContent) || 1);
+
+            bestScoreDisplay.textContent = bestScore;
+            bestLevelDisplay.textContent = bestLevel;
+
+            // Save to localStorage
+            saveProgress();
+        }
+
+        /**
+         * Shows modal with round result and next action button.
+         * @param {boolean} success - Whether the round was successful
+         * @param {number} details - Either points earned or pattern length
+         */
+        function showResultModal(success, details) {
+            if (success) {
+                modalTitle.textContent = '🎉 Round Complete!';
+                modalMessage.textContent = `Excellent! You earned ${details} points.`;
+                retryBtn.style.display = 'none';
+                nextRoundBtn.style.display = 'block';
+                nextRoundBtn.textContent = 'Next Round';
+            } else {
+                modalTitle.textContent = '❌ Round Failed';
+                const accuracy = Math.round((gameState.correctAttempts / gameState.currentPattern.length) * 100);
+                modalMessage.textContent = `You got ${gameState.correctAttempts} out of ${gameState.currentPattern.length} correct (${accuracy}% accuracy).`;
+                retryBtn.style.display = 'block';
+                nextRoundBtn.style.display = 'none';
+            }
+
+            resultModal.classList.add('active');
+        }
+
+        function hideResultModal() {
+            resultModal.classList.remove('active');
+        }
+
+        // ============================================================================
+        // GAME INITIALIZATION & CONTROL
+        // ============================================================================
+        /**
+         * Starts a new game.
+         * Resets all game state and creates the initial grid.
+         */
+        function startGame() {
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.currentPattern = [];
+            gameState.playerPattern = [];
+            gameState.accuracy = 0;
+            gameState.totalAttempts = 0;
+            gameState.correctAttempts = 0;
+            gameState.streak = 0;
+            gameState.responseTime = [];
+            gameState.gameActive = true;
+            gameState.isPlayerTurn = false;
+            gameState.gridSize = 3;
+            gameState.flashDuration = aiConfig.baseFlashDuration;
+            gameState.delayBetweenFlashes = aiConfig.baseFlashDelay;
+            recentPerformance.length = 0;
+            difficultyStatus.textContent = '';
+
+            startBtn.textContent = 'Game Started';
+            startBtn.disabled = true;
+
+            createGrid();
+
+            // Generate initial pattern (3 squares)
+            gameState.currentPattern = generatePattern(3, gameState.gridSize);
+
+            updateStats();
+            hideResultModal();
+
+            // Start playing the pattern
+            setTimeout(() => playPattern(), 500);
+        }
+
+        /**
+         * Resets all progress and clears localStorage.
+         */
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
+                localStorage.removeItem('memoryGameProgress');
+                gameState.score = 0;
+                gameState.currentLevel = 1;
+                gameState.streak = 0;
+                gameState.accuracy = 0;
+                bestScoreDisplay.textContent = '0';
+                bestLevelDisplay.textContent = '1';
+                updateStats();
+                roundMessage.textContent = '';
+                patternDisplay.textContent = '';
+                difficultyStatus.textContent = '';
+            }
+        }
+
+        /**
+         * Handles retry button - replays the same pattern.
+         */
+        function retryLevel() {
+            gameState.playerPattern = [];
+            gameState.correctAttempts = 0;
+            gameState.responseTime = [];
+            roundMessage.textContent = '';
+            hideResultModal();
+            setTimeout(() => playPattern(), 500);
+        }
+
+        /**
+         * Handles next round button - progresses to next level.
+         */
+        function nextRound() {
+            progressToNextLevel();
+            hideResultModal();
+            setTimeout(() => playPattern(), 500);
+        }
+
+        // ============================================================================
+        // LOCAL STORAGE - PERSIST PLAYER PROGRESS
+        // ============================================================================
+        /**
+         * Saves best score and level to browser storage.
+         */
+        function saveProgress() {
+            const progress = {
+                bestScore: parseInt(bestScoreDisplay.textContent) || 0,
+                bestLevel: parseInt(bestLevelDisplay.textContent) || 1,
+                lastPlayed: new Date().toISOString()
+            };
+            localStorage.setItem('memoryGameProgress', JSON.stringify(progress));
+        }
+
+        /**
+         * Loads best score and level from browser storage.
+         */
+        function loadProgress() {
+            const saved = localStorage.getItem('memoryGameProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                bestScoreDisplay.textContent = progress.bestScore || 0;
+                bestLevelDisplay.textContent = progress.bestLevel || 1;
+            }
+        }
+
+        // ============================================================================
+        // UTILITY FUNCTIONS
+        // ============================================================================
+        /**
+         * Promise-based delay function for async/await patterns.
+         * @param {number} ms - Milliseconds to delay
+         * @returns {Promise} Resolves after delay
+         */
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ============================================================================
+        // EVENT LISTENERS
+        // ============================================================================
+        startBtn.addEventListener('click', startGame);
+        resetBtn.addEventListener('click', resetProgress);
+        nextRoundBtn.addEventListener('click', nextRound);
+        retryBtn.addEventListener('click', retryLevel);
+
+        // Allow starting game with Enter key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && startBtn.textContent === 'Start Game') {
+                startGame();
+            }
+        });
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        loadProgress();
+        createGrid();
+    </script>
+</body>
+</html>
